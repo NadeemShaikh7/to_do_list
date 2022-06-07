@@ -20,6 +20,7 @@ class TaskList extends StatelessWidget {
       title: task.title!,
       subtitle: task.description!,
       isChecked: false,
+      onChanged: null,
       onClick: null,
     );
   }

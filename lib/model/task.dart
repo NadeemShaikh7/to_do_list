@@ -3,12 +3,14 @@ class Task {
   String? title;
   String? description;
   String? date;
+  bool? done;
 
   Task(
       {this.id,
       required this.title,
       required this.description,
-      required this.date});
+      required this.date,
+      required this.done});
   //
   // Task.fromJson(Map<String, dynamic> json) {
   //   id = json['id'];
@@ -20,6 +22,7 @@ class Task {
       id: json['id'],
       description: json['description'],
       title: json['title'],
+      done: json['done'],
       date: json['date']);
 
   // static fromJson(Map<String, dynamic> data) {}ate = json['date'];
@@ -33,6 +36,7 @@ class Task {
     data['title'] = title;
     data['description'] = description;
     data['date'] = date;
+    data['done'] = done;
     return data;
   }
 }

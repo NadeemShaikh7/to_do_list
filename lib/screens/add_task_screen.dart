@@ -88,6 +88,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                       onPressed: () {
                         //ToDo
                         final task = Task(
+                            done: false,
                             description: controllerDesc.text,
                             title: controllerTitle.text,
                             date: controllerDate.text);
@@ -147,6 +148,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                           onPressed: () {
                             //ToDo
                             final task = Task(
+                                done: false,
                                 description: controllerDesc.text,
                                 title: controllerTitle.text,
                                 date: controllerDate.text);

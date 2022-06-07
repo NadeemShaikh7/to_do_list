@@ -7,8 +7,17 @@ import 'package:to_do_list/constants.dart';
 import '../components/task_item.dart';
 import '../model/Task.dart';
 
-class TaskScreen extends StatelessWidget {
+class TaskScreen extends StatefulWidget {
   TaskScreen({Key? key}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() {
+    return TaskScreenSate();
+  }
+}
+
+class TaskScreenSate extends State<TaskScreen> {
+  int? length;
 
   @override
   Widget build(BuildContext context) {
@@ -51,11 +60,28 @@ class TaskScreen extends StatelessWidget {
                   title,
                   style: titleStyle,
                 ),
-                Text(
-                  '12 Things',
-                  style: titleStyle.copyWith(
-                      fontSize: 18.0, color: Colors.white70),
-                ),
+                // length != null
+                //     ? Text(
+                //         '${length.toString()}',
+                //         style: titleStyle.copyWith(
+                //             fontSize: 18.0, color: Colors.white70),
+                //       )
+                //     : SizedBox(height: 10.0),
+                StreamBuilder(
+                    stream: getCount(),
+                    builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                      if (snapshot.hasData) {
+                        print('Nads hasData');
+                        return Text(
+                          '${snapshot.data?.docs.length} Things',
+                          style: titleStyle.copyWith(
+                              fontSize: 18.0, color: Colors.white70),
+                        );
+                      }
+                      return SizedBox(
+                        height: 10.0,
+                      );
+                    }),
               ],
             ),
           ),
@@ -116,24 +142,6 @@ class TaskScreen extends StatelessWidget {
     );
   }
 
-  Widget buildTask(Task task, BuildContext context) {
-    return TaskItem(
-      title: task.title!,
-      subtitle: task.description!,
-      isChecked: false,
-      onClick: () => onCLicked(context, task),
-    );
-  }
-
-  Stream readTasks() {
-    final stream = FirebaseFirestore.instance
-        .collection('users')
-        .snapshots()
-        .map(
-            (event) => event.docs.map((e) => Task.fromJson(e.data())).toList());
-    return stream;
-  }
-
   getCircleAvatar(User user) {
     try {
       return CircleAvatar(
@@ -154,6 +162,39 @@ class TaskScreen extends StatelessWidget {
     }
   }
 
+  Widget buildTask(Task task, BuildContext context) {
+    bool? isCheckedOrNot = task.done;
+    return TaskItem(
+      title: task.title!,
+      subtitle: task.description!,
+      isChecked: isCheckedOrNot!,
+      onClick: () => onCLicked(context, task),
+      onChanged: () => (newState) {
+        print('new STate = ${newState}');
+        setState(() {
+          isCheckedOrNot = newState;
+          task.done = newState;
+          updateTask(task);
+        });
+      },
+    );
+  }
+
+  Future updateTask(Task task) async {
+    late final DocumentReference<Map<String, dynamic>> docTask;
+    docTask = FirebaseFirestore.instance.collection('users').doc(task.id);
+    await docTask.set(task.toJson());
+  }
+
+  Stream readTasks() {
+    final stream = FirebaseFirestore.instance
+        .collection('users')
+        .snapshots()
+        .map(
+            (event) => event.docs.map((e) => Task.fromJson(e.data())).toList());
+    return stream;
+  }
+
   onCLicked(BuildContext context, Task task) {
     print('onclicked');
     Navigator.of(context)
@@ -170,5 +211,10 @@ class TaskScreen extends StatelessWidget {
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
     });
+  }
+
+  getCount() {
+    print('Nads getCount');
+    return FirebaseFirestore.instance.collection('users').snapshots();
   }
 }
