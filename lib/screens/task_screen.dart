@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:to_do_list/constants.dart';
+import 'package:to_do_list/provider/sign_in_provider.dart';
 
 import '../components/task_item.dart';
 import '../model/Task.dart';
@@ -18,11 +20,12 @@ class TaskScreen extends StatefulWidget {
 
 class TaskScreenSate extends State<TaskScreen> {
   int? length;
+  User? user;
 
   @override
   Widget build(BuildContext context) {
     print('Logged in');
-    final user = FirebaseAuth.instance.currentUser!;
+    user = FirebaseAuth.instance.currentUser!;
     return Scaffold(
       backgroundColor: Colors.indigoAccent,
       body: Column(
@@ -37,9 +40,14 @@ class TaskScreenSate extends State<TaskScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    getCircleAvatar(user),
+                    getCircleAvatar(user!),
                     ElevatedButton(
-                      onPressed: () => FirebaseAuth.instance.signOut(),
+                      onPressed: () {
+                        FirebaseAuth.instance.signOut();
+                        Provider.of<GoogleSignInProvider>(context,
+                                listen: false)
+                            .signOutGoogle();
+                      },
                       child: Text(
                         'Logout',
                         style: TextStyle(
@@ -182,13 +190,19 @@ class TaskScreenSate extends State<TaskScreen> {
 
   Future updateTask(Task task) async {
     late final DocumentReference<Map<String, dynamic>> docTask;
-    docTask = FirebaseFirestore.instance.collection('users').doc(task.id);
+    docTask = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('user_tasks')
+        .doc(task.id);
     await docTask.set(task.toJson());
   }
 
   Stream readTasks() {
     final stream = FirebaseFirestore.instance
         .collection('users')
+        .doc(user!.uid)
+        .collection('user_tasks')
         .snapshots()
         .map(
             (event) => event.docs.map((e) => Task.fromJson(e.data())).toList());
@@ -215,6 +229,10 @@ class TaskScreenSate extends State<TaskScreen> {
 
   getCount() {
     print('Nads getCount');
-    return FirebaseFirestore.instance.collection('users').snapshots();
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('user_tasks')
+        .snapshots();
   }
 }

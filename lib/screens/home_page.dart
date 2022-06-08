@@ -7,6 +7,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
+      stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -17,6 +18,8 @@ class HomePage extends StatelessWidget {
             ),
           );
         } else if (snapshot.hasData) {
+          // print('Nads ${FirebaseAuth.instance.currentUser?.uid}');
+          // print('Nads ${Provider.of<GoogleSignInProvider>(context).user.id}');
           return TaskScreen();
         } else if (snapshot.hasError) {
           return const Scaffold(
@@ -28,7 +31,6 @@ class HomePage extends StatelessWidget {
           return LoginScreen();
         }
       },
-      stream: FirebaseAuth.instance.authStateChanges(),
     );
   }
 }

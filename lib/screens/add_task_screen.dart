@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../constants.dart';
@@ -17,9 +18,14 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final controllerDesc = TextEditingController();
   final controllerDate = TextEditingController();
   late String? id;
+  final User? user = FirebaseAuth.instance.currentUser!;
 
   Future<Task?> fetchTask(String id) async {
-    final docTask = FirebaseFirestore.instance.collection('users').doc(id);
+    final docTask = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('user_tasks')
+        .doc(id);
     final snapshot = await docTask.get();
     if (snapshot.exists) {
       Task task = Task.fromJson(snapshot.data()!);
@@ -148,11 +154,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                           onPressed: () {
                             //ToDo
                             final task = Task(
-                                done: false,
+                                done: snapshot.data?.done,
                                 description: controllerDesc.text,
                                 title: controllerTitle.text,
                                 date: controllerDate.text);
-                            createTask(task);
+                            updateTask(task);
                             Navigator.pop(context, 1);
                           },
                           child: Text('Add Task')),
@@ -196,20 +202,52 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     // print()
   }
 
-  Future createTask(Task task) async {
+  Future updateTask(Task task) async {
     late final DocumentReference<Map<String, dynamic>> docTask;
     if (id == null) {
-      docTask = FirebaseFirestore.instance.collection('users').doc();
+      docTask = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .collection('user_tasks')
+          .doc();
     } else {
-      docTask = FirebaseFirestore.instance.collection('users').doc(id);
+      docTask = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .collection('user_tasks')
+          .doc(id);
     }
     task.id = docTask.id;
     await docTask.set(task.toJson());
   }
 
+  Future createTask(Task task) async {
+    late final DocumentReference<Map<String, dynamic>> docTask;
+    if (id == null) {
+      docTask = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .collection('user_tasks')
+          .doc();
+    } else {
+      docTask = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .collection('user_tasks')
+          .doc(id);
+    }
+    task.id = docTask.id;
+    print('Nads ${docTask.id}');
+    await docTask.set(task.toJson());
+  }
+
   Future deleteTask(Task task) async {
     late final DocumentReference<Map<String, dynamic>> docTask;
-    docTask = FirebaseFirestore.instance.collection('users').doc(id);
+    docTask = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('user_tasks')
+        .doc(task.id);
     // task.id = docTask.id;
     await docTask.delete();
   }

@@ -25,11 +25,6 @@ class Task {
       done: json['done'],
       date: json['date']);
 
-  // static fromJson(Map<String, dynamic> data) {}ate = json['date'];
-  // }
-
-  // static fromJson(Map<String, dynamic> json) =>
-
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['id'] = id;
