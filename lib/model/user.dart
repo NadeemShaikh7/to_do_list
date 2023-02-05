@@ -1,12 +1,12 @@
-class UserPoJo {
+class User {
   String? userName;
   String? email;
   String? userID;
   String? imageUrl;
 
-  UserPoJo({this.userName, this.email, this.userID, this.imageUrl});
+  User({this.userName, this.email, this.userID, this.imageUrl});
 
-  static fromJson(Map<String, dynamic> json) => UserPoJo(
+  static fromJson(Map<String, dynamic> json) => User(
       userName: json['userName'],
       email: json['email'],
       userID: json['userID'],

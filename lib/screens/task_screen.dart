@@ -212,7 +212,7 @@ class TaskScreenSate extends State<TaskScreen> {
   onCLicked(BuildContext context, Task task) {
     print('onclicked');
     Navigator.of(context)
-        .pushNamed(kAddPage, arguments: task.id!)
+        .pushNamed(kEditPage, arguments: task.id!)
         .then((value) {
       String? text;
       if (value == 1) {

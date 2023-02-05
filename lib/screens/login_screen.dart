@@ -46,9 +46,9 @@ class LoginScreen extends StatelessWidget {
                       minimumSize: Size(double.infinity, 50.0)),
                   onPressed: () {
                     print('Login pressed');
-                    final provider = Provider.of<GoogleSignInProvider>(context,
-                        listen: false);
-                    provider.googleLogin();
+                    Provider.of<GoogleSignInProvider>(context,
+                            listen: false)
+                        .googleLogin();
                   },
                   label: Text('Sign in with Google'))
             ],
