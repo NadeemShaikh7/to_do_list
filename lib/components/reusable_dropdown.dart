@@ -26,11 +26,6 @@ class ReusableDropDown extends StatelessWidget {
   }
 
   Widget getPicker(BuildContext context) {
-    // DropdownMenuItem dropdownMenuItem1 = DropdownMenuItem(
-    //   value: Text(unitListItem1.displayItem),
-    //   child: unitListItem1,
-    // );
-    // items.add(value);
     if (Platform.isIOS) {
       return getIosPicker(context);
     } else if (Platform.isAndroid) {
@@ -51,9 +46,6 @@ class ReusableDropDown extends StatelessWidget {
             .toList(),
         value: initialValue,
         onChanged: onChanged(),
-        // dropdownColor: onChanged == null
-        //     ? kStyleTableBorderColor
-        //     : ThemeData().canvasColor,
       ),
     );
   }
@@ -105,7 +97,6 @@ class ReusableDropDown extends StatelessWidget {
 class UnitListItem {
   int value;
   String displayItem;
-  // dynamic identifier;
   UnitListItem({required this.value, required this.displayItem});
 }
 

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 const String title = 'Your\nThings';
-const kHomePage = '/homePage';
+const kHomePage = '/';
 const kTaskPage = '/taskPage';
 const kAddPage = '/addPage';
 const kEditPage = '/editPage';

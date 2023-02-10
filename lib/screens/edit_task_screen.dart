@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:to_do_list/bloc/to_do_bloc.dart';
 
 import '../components/reusable_dropdown.dart';
 import '../constants.dart';
@@ -30,6 +32,17 @@ class _EditTaskScreenState extends State<EditTaskScreen>{
   void initState() {
     super.initState();
     currentSelected = items[0];
+    Future.delayed(Duration.zero,(){
+      id = ModalRoute.of(context)?.settings.arguments as String?;
+      BlocProvider.of<ToDoBloc>(context).add(GetTaskForUpdate(id!));
+      if(task?.type=="Personal") {
+        currentSelected = items[1];
+      }
+      else{
+        currentSelected = items[0];
+      }
+    });
+
   }
 
   onTypeChanged(value){
@@ -43,19 +56,6 @@ class _EditTaskScreenState extends State<EditTaskScreen>{
   @override
   void didChangeDependencies() async{
     super.didChangeDependencies();
-    id = ModalRoute.of(context)?.settings.arguments as String?;
-    task = await fetchTask(id!);
-    if(task?.type=="Personal") {
-      // value = 1;
-      // initialDisplayItem = "Personal";
-      currentSelected = items[1];
-    }
-    else{
-      currentSelected = items[0];
-    }
-    setState(() {
-      dataLoaded = true;
-    });
   }
 
   @override
@@ -66,80 +66,92 @@ class _EditTaskScreenState extends State<EditTaskScreen>{
       appBar: AppBar(
         title: const Text('Edit Task'),
       ),
-      body: !dataLoaded ? const Center(child: CircularProgressIndicator(),) :
-      Padding(
-              padding: const EdgeInsets.all(25.0),
-              child: Column(
-                children: [
-                  ReusableDropDown(onChanged: () => onTypeChanged, initialValue: currentSelected!, items: items),
-                  const SizedBox(
-                    height: 20.0,
-                  ),
-                  TextField(
-                      controller: controllerTitle,
-                      decoration: const InputDecoration(
-                          hintText: 'Title',
-                          hintStyle: TextStyle(color: Colors.white70))),
-                  const SizedBox(
-                    height: 20.0,
-                  ),
-                  TextField(
-                      controller: controllerDesc,
-                      decoration: const InputDecoration(
-                          hintText: 'Description',
-                          hintStyle: TextStyle(color: Colors.white70))),
-                  const SizedBox(
-                    height: 20.0,
-                  ),
-                  TextField(
-                      controller: controllerDate,
-                      onTap: _openDatePicker,
-                      decoration: const InputDecoration(
-                          hintText: 'Date',
-                          hintStyle: TextStyle(color: Colors.white70))),
-                  const SizedBox(
-                    height: 20.0,
-                  ),
-                  ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        primary: Colors.blue,
-                      ),
-                      onPressed: () {
-                        //ToDo
-                        final taskToBeUpdated = Task(
-                            done: false,
-                            description: controllerDesc.text,
-                            title: controllerTitle.text,
-                            date: controllerDate.text,type: currentSelected?.displayItem);
-                        updateTask(taskToBeUpdated);
-                        Navigator.pop(context, 1);
-                      },
-                      child: Text('Add Task')),
-                ],
-              ),
-            ),
-          // }
+      body: BlocConsumer<ToDoBloc,ToDoState>(
 
-        // },
-      // ),
+          listener: (context, state) {
+            if (state is GetTaskSuccess){
+              print("nads values assigned");
+              controllerTitle.text = state.task.title!;
+              controllerDate.text = state.task.date!;
+              controllerDesc.text = state.task.description!;
+            }
+
+          },
+          builder: (_,state){
+        if (state is GetTaskSuccess) {
+          return Padding(
+            padding: const EdgeInsets.all(25.0),
+            child: Column(
+              children: [
+                ReusableDropDown(onChanged: () => onTypeChanged,
+                    initialValue: currentSelected!,
+                    items: items),
+                const SizedBox(
+                  height: 20.0,
+                ),
+                TextField(
+                    controller: controllerTitle,
+                    decoration: const InputDecoration(
+                        hintText: 'Title',
+                        hintStyle: TextStyle(color: Colors.white70))),
+                const SizedBox(
+                  height: 20.0,
+                ),
+                TextField(
+                    controller: controllerDesc,
+                    decoration: const InputDecoration(
+                        hintText: 'Description',
+                        hintStyle: TextStyle(color: Colors.white70))),
+                const SizedBox(
+                  height: 20.0,
+                ),
+                TextField(
+                    controller: controllerDate,
+                    onTap: _openDatePicker,
+                    decoration: const InputDecoration(
+                        hintText: 'Date',
+                        hintStyle: TextStyle(color: Colors.white70))),
+                const SizedBox(
+                  height: 20.0,
+                ),
+                ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.blue,
+                    ),
+                    onPressed: () {
+                      //ToDo
+                      final taskToBeUpdated = Task(
+                          id: id,
+                          done: false,
+                          description: controllerDesc.text,
+                          title: controllerTitle.text,
+                          date: controllerDate.text,
+                          type: currentSelected?.displayItem);
+                      BlocProvider.of<ToDoBloc>(context).add(UpdateTask(taskToBeUpdated));
+                    },
+                    child: Text('Add Task')),
+              ],
+            ),
+          );
+        }
+        else if(state is EditPagePopped){
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pop(context,1);
+          });
+        }
+        print("nads screen loading");
+        return Center(child: CircularProgressIndicator());
+      }),
     );
   }
 
-  fetchTask(String id) async {
-    final docTask = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .collection('user_tasks')
-        .doc(id);
-    final snapshot = await docTask.get();
-    if (snapshot.exists) {
-      Task task = Task.fromJson(snapshot.data()!);
-      controllerTitle.text = task.title!;
-      controllerDate.text = task.date!;
-      controllerDesc.text = task.description!;
-      return task;
-    }
+  void myCallback(Function callback) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      callback();
+    });
   }
+
   _openDatePicker() async {
     FocusScope.of(context).requestFocus(new FocusNode());
     DateTime? date = await showDatePicker(
@@ -152,113 +164,4 @@ class _EditTaskScreenState extends State<EditTaskScreen>{
     });
     // print()
   }
-  Future deleteTask(Task task) async {
-    late final DocumentReference<Map<String, dynamic>> docTask;
-    docTask = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .collection('user_tasks')
-        .doc(task.id);
-    // task.id = docTask.id;
-    await docTask.delete();
-  }
-  Future updateTask(Task task) async {
-    late final DocumentReference<Map<String, dynamic>> docTask;
-    if (id == null) {
-      docTask = FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .collection('user_tasks')
-          .doc();
-    } else {
-      docTask = FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .collection('user_tasks')
-          .doc(id);
-    }
-    task.id = docTask.id;
-    await docTask.set(task.toJson());
-  }
 }
-
-//
-// StreamBuilder(
-// stream: fetchTask(id!),
-// builder: (context,snapshot){
-// if (!snapshot.hasData) {
-// return const Center(
-// child: CircularProgressIndicator(
-// color: Colors.white,
-// ),
-// );
-// }
-// else{
-// task = snapshot.data as Task;
-// int value=0;
-// String initialDisplayItem = "Business";
-// if(task?.type=="Personal") {
-// value = 1;
-// initialDisplayItem = "Personal";
-// currentSelected = items[1];
-// }
-// else{
-// currentSelected = items[0];
-// }
-//
-//
-// return Padding(
-// padding: const EdgeInsets.all(25.0),
-// child: Column(
-// children: [
-// ReusableDropDown(onChanged: () => onTypeChanged, initialValue: currentSelected!, items: items),
-// const SizedBox(
-// height: 20.0,
-// ),
-// TextField(
-// controller: controllerTitle,
-// decoration: const InputDecoration(
-// hintText: 'Title',
-// hintStyle: TextStyle(color: Colors.white70))),
-// const SizedBox(
-// height: 20.0,
-// ),
-// TextField(
-// controller: controllerDesc,
-// decoration: const InputDecoration(
-// hintText: 'Description',
-// hintStyle: TextStyle(color: Colors.white70))),
-// const SizedBox(
-// height: 20.0,
-// ),
-// TextField(
-// controller: controllerDate,
-// onTap: _openDatePicker,
-// decoration: const InputDecoration(
-// hintText: 'Date',
-// hintStyle: TextStyle(color: Colors.white70))),
-// const SizedBox(
-// height: 20.0,
-// ),
-// ElevatedButton(
-// style: ElevatedButton.styleFrom(
-// primary: Colors.blue,
-// ),
-// onPressed: () {
-// //ToDo
-// final taskToBeUpdated = Task(
-// done: false,
-// description: controllerDesc.text,
-// title: controllerTitle.text,
-// date: controllerDate.text,type: currentSelected?.displayItem);
-// updateTask(taskToBeUpdated);
-// Navigator.pop(context, 1);
-// },
-// child: Text('Add Task')),
-// ],
-// ),
-// );
-// }
-//
-// },
-// ),
